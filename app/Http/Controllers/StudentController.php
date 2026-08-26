@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Student;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Inertia;
 
 class StudentController extends Controller
 {
@@ -12,7 +13,9 @@ class StudentController extends Controller
      */
     public function index()
     {
-    return Student::all();
+    return Inertia::render('/Students',[
+        'students'=>Student::all(),
+    ]);
     }
 
     /**
@@ -28,15 +31,26 @@ class StudentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+    $validate = $request ->validate([
+        'first_name' => 'required|string|max:100',
+        'last_name' => 'required|string|max:100',
+        'birthday'=> 'required|date|before:today',
+        'email' => 'required|email|unique:students:email',
+        'program' => 'required|string|max:60',
+        'gender' => 'required|string|max:60',
+        'year_level' => 'required|integer|min:1|max:4'
+    ]);
+    $student =Student::Create($validated);
+    return response()->json($student, 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Student $student)
+    public function show($id)
     {
-        //
+    $student = Student :: findOrFail($id);
+    return response()->json($student);
     }
 
     /**
@@ -50,9 +64,20 @@ class StudentController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Student $student)
+    public function update(Request $request, $id)
     {
-        //
+        $student = Student :: findOrFail($id);
+        $validated = $request->validate([
+         'first_name' => 'required|string|max:100',
+        'last_name' => 'required|string|max:100',
+        'birthday'=> 'required|date|before:today',
+        'email' => 'required|email|unique:students:email'.$student->id,
+        'program' => 'required|string|max:60',
+        'gender' => 'required|string|max:60',
+        'year_level' => 'required|integer|min:1|max:4'
+        ]);
+        $student->update($validated);
+        return response()->json($student);
     }
 
     /**
@@ -60,6 +85,10 @@ class StudentController extends Controller
      */
     public function destroy(Student $student)
     {
-        //
+     $student = Student :: findOrFail($id);
+     $student->delete();
+     return response()->json([
+        'message'=>'Student successfully removed'
+     ]);
     }
 }
